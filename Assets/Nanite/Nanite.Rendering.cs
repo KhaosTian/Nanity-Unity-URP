@@ -132,7 +132,7 @@ namespace Nanite
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
 
             m_ProcessingKernelID = ProcessingCompute.FindKernel("ProcessingMain");
-            
+
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, DrawArgsBufferID, m_DrawArgsBuffer);
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, VisibleMeshletIndicesBufferID,
                 m_VisibleMeshletIndicesBuffer);
@@ -146,6 +146,7 @@ namespace Nanite
             m_MeshletMaterial = new Material(Shader.Find("Nanite/MeshletRendering"));
             m_MeshletMaterial.SetBuffer(VerticesBufferID, m_VerticesBuffer);
             m_MeshletMaterial.SetBuffer(IndicesBufferID, m_IndicesBuffer);
+            m_MeshletMaterial.SetBuffer(VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
         }
 
         private void Update()
@@ -158,16 +159,16 @@ namespace Nanite
 
             // visible count 存储在 dispatchArgs 的 x 维度
             CullingCompute.Dispatch(m_CullingKernelID, m_KernelGroupX, 1, 1);
- 
+
             // 获取 dispatchArgs 在GPU上的结果
             m_DispatchArgsBuffer.GetData(dispatchArgs);
 
-            
+
             // drawArgs 存储了实例索引数、实例个数（visible count ）等参数
             var drawArgs = new uint[5] { MAX_PRIMS * 3, dispatchArgs[0], 0, 0, 0 };
             m_DrawArgsBuffer.SetData(drawArgs);
             ProcessingCompute.DispatchIndirect(m_ProcessingKernelID, m_DispatchArgsBuffer);
-            
+
             Graphics.DrawProceduralIndirect(m_MeshletMaterial, m_ProxyBounds, MeshTopology.Triangles, m_DrawArgsBuffer);
         }
 

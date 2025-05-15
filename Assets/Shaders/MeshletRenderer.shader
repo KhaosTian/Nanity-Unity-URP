@@ -9,10 +9,7 @@ Shader "Nanite/MeshletRendering"
         LOD 200
         Pass
         {
-            Tags
-            {
-                "LightMode"="UniversalForward"
-            }
+
             Cull Off
             CGPROGRAM
             #pragma vertex vert
@@ -44,31 +41,44 @@ Shader "Nanite/MeshletRendering"
             struct v2f
             {
                 float4 vertex : SV_POSITION;
-                float3 color : COLOR;
+                uint index : TEXCOORD1;
             };
 
             StructuredBuffer<Vertex> _VerticesBuffer;
             StructuredBuffer<uint> _IndicesBuffer;
+            StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+
+            static const float3 _Colors[8] = {
+                float3(0.85, 0.35, 0.05),
+                float3(0.10, 0.35, 0.90),
+                float3(0.15, 0.80, 0.20),
+                float3(0.90, 0.15, 0.15),
+                float3(0.60, 0.10, 0.80),
+                float3(0.50, 0.40, 0.30),
+                float3(0.90, 0.75, 0.05),
+                float3(0.05, 0.70, 0.70)
+            };
 
             v2f vert(appdata v)
             {
-                uint meshletIndex = v.instanceID;
+                uint visibleMeshletIndex = v.instanceID;
                 uint triangleIndex = v.vertexID / 3;
                 uint vertexInTriangle = v.vertexID % 3;
 
-                uint currentIndex = 3 * (MAX_PRIMS * meshletIndex + triangleIndex) + vertexInTriangle;
+                uint currentIndex = 3 * (MAX_PRIMS * visibleMeshletIndex + triangleIndex) + vertexInTriangle;
                 uint vertexIndex = _IndicesBuffer[currentIndex];
                 float3 position = _VerticesBuffer[vertexIndex].Position;
 
                 v2f o;
                 o.vertex = UnityObjectToClipPos(position);
-                o.color = fixed3(0.5, 0.5, 0.5);
+                uint globalIndex = _VisibleMeshletIndicesBuffer[visibleMeshletIndex];
+                o.index = globalIndex;
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            float4 frag(v2f i) : SV_Target
             {
-                fixed4 col = fixed4(i.color, 1);
+                float4 col = float4(_Colors[i.index % 8], 1);
                 return col;
             }
             ENDCG
