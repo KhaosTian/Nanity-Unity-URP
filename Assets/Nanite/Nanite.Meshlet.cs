@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
+using UnityEngine;
+using Vector3 = System.Numerics.Vector3;
 
 namespace Nanite
 {
@@ -13,20 +14,20 @@ namespace Nanite
         public uint VertCount;
         public uint PrimCount;
     }
-    
+
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public class MeshletCollection
     {
-        public uint[] triangles;
-        public uint[] vertices;
-        public Meshlet[] meshlets;
+        [HideInInspector] public uint[] triangles;
+        [HideInInspector] public uint[] vertices;
+        [HideInInspector] public Meshlet[] meshlets;
     }
 
     public struct Vertex
     {
         public Vector3 Position;
-        
+
         public static int SIZE = sizeof(float) * 3;
     }
 }

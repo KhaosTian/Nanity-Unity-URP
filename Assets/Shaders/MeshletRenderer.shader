@@ -11,6 +11,9 @@ Shader "Nanite/MeshletRendering"
         {
 
             Cull Off
+            ZWrite On
+            ZTest LEqual
+            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -45,19 +48,8 @@ Shader "Nanite/MeshletRendering"
             };
 
             StructuredBuffer<Vertex> _VerticesBuffer;
-            StructuredBuffer<uint> _IndicesBuffer;
+            ByteAddressBuffer _IndicesBuffer;
             StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
-
-            static const float3 _Colors[8] = {
-                float3(0.85, 0.35, 0.05),
-                float3(0.10, 0.35, 0.90),
-                float3(0.15, 0.80, 0.20),
-                float3(0.90, 0.15, 0.15),
-                float3(0.60, 0.10, 0.80),
-                float3(0.50, 0.40, 0.30),
-                float3(0.90, 0.75, 0.05),
-                float3(0.05, 0.70, 0.70)
-            };
 
             v2f vert(appdata v)
             {
@@ -66,7 +58,7 @@ Shader "Nanite/MeshletRendering"
                 uint vertexInTriangle = v.vertexID % 3;
 
                 uint currentIndex = 3 * (MAX_PRIMS * visibleMeshletIndex + triangleIndex) + vertexInTriangle;
-                uint vertexIndex = _IndicesBuffer[currentIndex];
+                uint vertexIndex = _IndicesBuffer.Load(currentIndex * 4);
                 float3 position = _VerticesBuffer[vertexIndex].Position;
 
                 v2f o;
@@ -78,8 +70,12 @@ Shader "Nanite/MeshletRendering"
 
             float4 frag(v2f i) : SV_Target
             {
-                float4 col = float4(_Colors[i.index % 8], 1);
-                return col;
+                float3 col = float3(
+                    float(i.index & 1),
+                    float(i.index & 3) / 4,
+                    float(i.index & 7) / 8
+                );
+                return float4(col, 1);
             }
             ENDCG
 

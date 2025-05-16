@@ -48,8 +48,8 @@ namespace Nanite
         private static readonly int DrawArgsBufferID = Shader.PropertyToID("_DrawArgsBuffer");
         private GraphicsBuffer m_DrawArgsBuffer;
         private GraphicsBuffer m_DispatchArgsBuffer;
-        private uint[] m_DispatchArgs = new uint[3] { 0, 1, 1 };
-        private uint[] m_DrawArgs = new uint[5] { MAX_PRIMS * 3, 0, 0, 0, 0 };
+        private readonly uint[] m_DispatchArgs = new uint[3] { 0, 1, 1 };
+        private readonly uint[] m_DrawArgs = new uint[5] { MAX_PRIMS * 3, 0, 0, 0, 0 };
 
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
@@ -100,7 +100,7 @@ namespace Nanite
 
             // 输出索引缓冲区
             m_IndicesBuffer =
-                new GraphicsBuffer(GraphicsBuffer.Target.Structured, MAX_PRIMS * m_MeshletCount * 3, sizeof(uint));
+                new GraphicsBuffer(GraphicsBuffer.Target.Raw, MAX_PRIMS * m_MeshletCount * 3, sizeof(uint));
             m_IndicesBuffer.name = nameof(m_IndicesBuffer);
             m_IndicesBuffer.SetData(new int[MAX_PRIMS * m_MeshletCount]);
 
@@ -134,7 +134,7 @@ namespace Nanite
             CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
             CullingCompute.SetBuffer(m_CullingKernelID, DispatchArgsBufferID, m_DispatchArgsBuffer);
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
-            
+
             m_ProcessingKernelID = ProcessingCompute.FindKernel("ProcessingMain");
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, DrawArgsBufferID, m_DrawArgsBuffer);
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, VisibleMeshletIndicesBufferID,
@@ -155,14 +155,14 @@ namespace Nanite
         private void Update()
         {
             if (!SelectedMeshletAsset) return;
-            
+
             m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
-            
+
             CullingCompute.Dispatch(m_CullingKernelID, m_KernelGroupX, 1, 1);
 
             GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DispatchArgsBuffer, sizeof(uint) * 0);
             GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DrawArgsBuffer, sizeof(uint) * 1);
-            
+
             ProcessingCompute.DispatchIndirect(m_ProcessingKernelID, m_DispatchArgsBuffer);
             Graphics.DrawProceduralIndirect(m_MeshletMaterial, m_ProxyBounds, MeshTopology.Triangles, m_DrawArgsBuffer);
         }

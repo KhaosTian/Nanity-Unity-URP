@@ -2,14 +2,13 @@
 
 #include "MeshletCommon.hlsl"
 
-
 StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
 StructuredBuffer<uint> _DrawArgsBuffer;
 StructuredBuffer<Meshlet> _MeshletsBuffer;
 StructuredBuffer<uint> _MeshletPrimitiveIndicesBuffer;
 StructuredBuffer<uint> _MeshletVertexIndicesBuffer;
 
-RWStructuredBuffer<uint> _IndicesBuffer;
+RWByteAddressBuffer _IndicesBuffer;
 
 uint3 UnpackPrimitive(uint primitive)
 {
@@ -51,7 +50,7 @@ void ProcessingMain(uint3 groupThreadId : SV_GroupThreadID, uint3 groupId : SV_G
     uint baseVtx2 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.z];
 
     // 写入全局三角形索引缓冲区
-    _IndicesBuffer[baseAddr + 0] = baseVtx0;
-    _IndicesBuffer[baseAddr + 1] = baseVtx1;
-    _IndicesBuffer[baseAddr + 2] = baseVtx2;
+    _IndicesBuffer.Store((baseAddr + 0) * 4, baseVtx0);
+    _IndicesBuffer.Store((baseAddr + 1) * 4, baseVtx1);
+    _IndicesBuffer.Store((baseAddr + 2) * 4, baseVtx2);
 }
