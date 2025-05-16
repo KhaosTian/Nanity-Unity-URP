@@ -75,3 +75,9 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 .idea/
+*.asset
+*.asset.meta
+*.fbx
+*.fbx.meta
+*.obj
+*.obj.meta
