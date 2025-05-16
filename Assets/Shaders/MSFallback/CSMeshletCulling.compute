@@ -15,7 +15,7 @@ bool IsVisible()
 void CullingMain(
     uint meshletIndex : SV_DispatchThreadID)
 {
-    if (meshletIndex >= _MeshletCount) return;
+    if (meshletIndex >= (uint)_MeshletCount) return;
     
     bool visible = IsVisible();
     if (visible)

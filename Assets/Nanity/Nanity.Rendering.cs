@@ -60,11 +60,17 @@ namespace Nanity
 
         private void Start()
         {
-            if (!SelectedMeshletAsset) return;
+            if (!IsValid()) return;
             InitAssets();
             InitParas();
             InitBuffers();
             SetupShaders();
+        }
+
+        private bool IsValid()
+        {
+            return SelectedMeshletAsset && SelectedMeshletAsset.SourceMesh &&
+                   SelectedMeshletAsset.SourceMesh.isReadable;
         }
 
         private void InitAssets()
@@ -154,7 +160,7 @@ namespace Nanity
 
         private void Update()
         {
-            if (!SelectedMeshletAsset) return;
+            if (!IsValid()) return;
 
             m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
 
