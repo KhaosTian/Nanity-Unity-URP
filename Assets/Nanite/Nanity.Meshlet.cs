@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using Vector3 = System.Numerics.Vector3;
 
-namespace Nanite
+namespace Nanity
 {
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
@@ -21,7 +21,7 @@ namespace Nanite
     {
         [HideInInspector] public uint[] triangles;
         [HideInInspector] public uint[] vertices;
-        [HideInInspector] public Meshlet[] meshlets;
+        public Meshlet[] meshlets;
     }
 
     public struct Vertex

@@ -1,4 +1,4 @@
-Shader "Nanite/MeshletRendering"
+Shader "Nanity/MeshletRendering"
 {
     SubShader
     {

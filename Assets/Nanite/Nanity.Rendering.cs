@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Nanite
+namespace Nanity
 {
-    public class NaniteRendering : MonoBehaviour
+    public class NanityRendering : MonoBehaviour
     {
         private const int MAX_VERTS = 64;
         private const int MAX_PRIMS = 126;
@@ -146,7 +146,7 @@ namespace Nanite
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, MeshletPrimitiveIndicesBufferID,
                 m_MeshletPrimitiveIndicesBuffer);
 
-            m_MeshletMaterial = new Material(Shader.Find("Nanite/MeshletRendering"));
+            m_MeshletMaterial = new Material(Shader.Find("Nanity/MeshletRendering"));
             m_MeshletMaterial.SetBuffer(VerticesBufferID, m_VerticesBuffer);
             m_MeshletMaterial.SetBuffer(IndicesBufferID, m_IndicesBuffer);
             m_MeshletMaterial.SetBuffer(VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace Nanite
+namespace Nanity
 {
     // Serializable asset to store meshlet data
     [CreateAssetMenu(fileName = "MeshletAsset", menuName = "Meshlet/Create MeshletAsset.asset", order = 1)]
@@ -21,7 +21,7 @@ namespace Nanite
         private bool m_ProcessingMesh = false;
         private string m_StatusMessage = "";
 
-        [MenuItem("Window/Nanite/Meshlet Generator")]
+        [MenuItem("Window/Nanity/Meshlet Generator")]
         public static void ShowWindow()
         {
             GetWindow<MeshletGenerator>("Meshlet Generator");
@@ -100,7 +100,7 @@ namespace Nanite
                 }
 
                 // Process the mesh
-                var collection = NanitePlugin.ProcessMesh(uintTriangles, vertices);
+                var collection = NanityPlugin.ProcessMesh(uintTriangles, vertices);
 
                 // Create and save the asset
                 var asset = CreateInstance<MeshletAsset>();

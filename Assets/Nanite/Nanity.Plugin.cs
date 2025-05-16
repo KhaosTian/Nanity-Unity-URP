@@ -2,41 +2,41 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace Nanite
+namespace Nanity
 {
-    public class NanitePlugin
+    public class NanityPlugin
     {
         // DLL Import statements
-        [DllImport("NaniteUnity")]
-        private static extern IntPtr CreateNaniteBuilder(
+        [DllImport("NanityPlugin")]
+        private static extern IntPtr CreateNanityBuilder(
             [In] uint[] indices, uint indicesCount,
             [In] float[] positions, uint positionsCount);
 
-        [DllImport("NaniteUnity")]
-        private static extern void DestroyNaniteBuilder(IntPtr builder);
+        [DllImport("NanityPlugin")]
+        private static extern void DestroyNanityBuilder(IntPtr builder);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern IntPtr BuildMeshlets(IntPtr builder);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern void DestroyMeshletsContext(IntPtr context);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern uint GetMeshletsCount(IntPtr context);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern bool GetMeshlets(IntPtr context, [Out] Meshlet[] meshlets, uint bufferSize);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern uint GetVerticesCount(IntPtr context);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern bool GetVertices(IntPtr context, [Out] uint[] indices, uint bufferSize);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern uint GetTriangleCount(IntPtr context);
 
-        [DllImport("NaniteUnity")]
+        [DllImport("NanityPlugin")]
         private static extern bool GetTriangles(IntPtr context, [Out] uint[] primitives, uint bufferSize);
 
        
@@ -51,14 +51,14 @@ namespace Nanite
                 positions[i * 3 + 2] = vertices[i].z;
             }
 
-            // Create NaniteBuilder
-            var builder = CreateNaniteBuilder(
+            // Create NanityBuilder
+            var builder = CreateNanityBuilder(
                 indices, (uint)indices.Length,
                 positions, (uint)positions.Length
             );
 
             if (builder == IntPtr.Zero) 
-                throw new Exception("Failed to create NaniteBuilder");
+                throw new Exception("Failed to create NanityBuilder");
 
             try
             {
@@ -98,7 +98,7 @@ namespace Nanite
             }
             finally
             {
-                DestroyNaniteBuilder(builder);
+                DestroyNanityBuilder(builder);
             }
         }
     }
