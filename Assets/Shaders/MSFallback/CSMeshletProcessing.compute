@@ -5,8 +5,8 @@
 StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
 StructuredBuffer<uint> _DrawArgsBuffer;
 StructuredBuffer<Meshlet> _MeshletsBuffer;
-StructuredBuffer<uint> _MeshletPrimitiveIndicesBuffer;
-StructuredBuffer<uint> _MeshletVertexIndicesBuffer;
+ByteAddressBuffer _MeshletPrimitiveIndicesBuffer;
+ByteAddressBuffer _MeshletVertexIndicesBuffer;
 
 RWByteAddressBuffer _IndicesBuffer;
 
@@ -17,40 +17,30 @@ uint3 UnpackPrimitive(uint primitive)
 
 uint3 GetPrimitive(Meshlet m, uint index)
 {
-    return UnpackPrimitive(_MeshletPrimitiveIndicesBuffer[m.PrimOffset + index]);
+    return UnpackPrimitive(_MeshletPrimitiveIndicesBuffer.Load((m.PrimOffset + index) * 4));
 }
 
 [numthreads(MS_GROUP_SIZE, 1, 1)]
-void ProcessingMain(uint3 groupThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
+void ProcessingMain(uint localThreadId : SV_GroupThreadID, uint visibleMeshletIndex : SV_GroupID)
 {
-    // 每个线程组处理一个 meshlet
-    uint visibleMeshletIndex = groupId.x;
-    uint localThreadId = groupThreadId.x;
-
     // 检查是否超出可见 meshlet 范围
     uint visibleCount = _DrawArgsBuffer[1];
-
     if (visibleMeshletIndex >= visibleCount) return;
 
     // 获取实际的 meshlet 索引和 meshlet 数据
     uint globalMeshletIndex = _VisibleMeshletIndicesBuffer[visibleMeshletIndex];
     Meshlet m = _MeshletsBuffer[globalMeshletIndex];
 
-
-    // 组内线程数不超过最大图元数限制以及当前 Meshlet 包含的图元数量
-    if (localThreadId >= m.PrimCount || localThreadId >= MAX_PRIMS) return;
-
-    // 获取局部三角形索引
-    uint3 localTri = GetPrimitive(m, localThreadId);
-
-    // 合并所有可见 meshlet 的索引
-    uint baseAddr = 3 * (MAX_PRIMS * visibleMeshletIndex + localThreadId);
-    uint baseVtx0 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.x];
-    uint baseVtx1 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.y];
-    uint baseVtx2 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.z];
+    if (localThreadId >= MAX_PRIMS) return;
+    
+    uint3 localTri = GetPrimitive(m, localThreadId); // 获取局部三角形索引
+    uint baseVtx0 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.x) * 4);
+    uint baseVtx1 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.y) * 4);
+    uint baseVtx2 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.z) * 4);
 
     // 写入全局三角形索引缓冲区
-    _IndicesBuffer.Store((baseAddr + 0) * 4, baseVtx0);
-    _IndicesBuffer.Store((baseAddr + 1) * 4, baseVtx1);
-    _IndicesBuffer.Store((baseAddr + 2) * 4, baseVtx2);
+    uint baseAddr = 3 * (MAX_PRIMS * visibleMeshletIndex + localThreadId);
+    _IndicesBuffer.Store((baseAddr + 0) * 4, localThreadId < m.PrimCount ? baseVtx0 : 0xffff);
+    _IndicesBuffer.Store((baseAddr + 1) * 4, localThreadId < m.PrimCount ? baseVtx1 : 0xffff);
+    _IndicesBuffer.Store((baseAddr + 2) * 4, localThreadId < m.PrimCount ? baseVtx2 : 0xffff);
 }

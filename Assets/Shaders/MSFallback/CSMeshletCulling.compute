@@ -13,9 +13,8 @@ bool IsVisible()
 
 [numthreads(KERNEL_SIZE_X, 1, 1)]
 void CullingMain(
-    uint3 id : SV_DispatchThreadID)
+    uint meshletIndex : SV_DispatchThreadID)
 {
-    uint meshletIndex = id.x;
     if (meshletIndex >= _MeshletCount) return;
     
     bool visible = IsVisible();

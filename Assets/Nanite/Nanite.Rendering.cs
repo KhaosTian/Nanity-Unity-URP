@@ -111,12 +111,12 @@ namespace Nanite
 
             // Meshlet Vertices索引缓冲区
             m_MeshletVertexIndicesBuffer =
-                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_Collection.vertices.Length, sizeof(uint));
+                new GraphicsBuffer(GraphicsBuffer.Target.Raw, m_Collection.vertices.Length, sizeof(uint));
             m_MeshletVertexIndicesBuffer.name = nameof(m_MeshletVertexIndicesBuffer);
             m_MeshletVertexIndicesBuffer.SetData(m_Collection.vertices);
 
             // Meshlet Triangles索引缓冲区
-            m_MeshletPrimitiveIndicesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,
+            m_MeshletPrimitiveIndicesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw,
                 m_Collection.triangles.Length, sizeof(uint));
             m_MeshletPrimitiveIndicesBuffer.name = nameof(m_MeshletPrimitiveIndicesBuffer);
             m_MeshletPrimitiveIndicesBuffer.SetData(m_Collection.triangles);
