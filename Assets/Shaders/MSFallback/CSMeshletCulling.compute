@@ -2,8 +2,7 @@
 
 #include "MeshletCommon.hlsl"
 
-RWStructuredBuffer<uint> _DispatchArgsBuffer;
-RWStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+AppendStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
 int _MeshletCount;
 
 bool IsVisible()
@@ -16,20 +15,12 @@ bool IsVisible()
 void CullingMain(
     uint3 id : SV_DispatchThreadID)
 {
-    // 每个线程处理一个meshlet，全局线程id就是meshlet的索引
     uint meshletIndex = id.x;
-
-    // 全局线程数不能超过实际meshlet数量
     if (meshletIndex >= _MeshletCount) return;
-
-    // 进行可见性测试
-    bool visible = IsVisible();
     
+    bool visible = IsVisible();
     if (visible)
     {
-        uint visibleIndex = 0;
-        // 原子操作获取可见meshlet数量并加1，记录该meshlet的索引
-        InterlockedAdd(_DispatchArgsBuffer[0], 1, visibleIndex);
-        _VisibleMeshletIndicesBuffer[visibleIndex] = meshletIndex;
+        _VisibleMeshletIndicesBuffer.Append(meshletIndex);
     }
 }

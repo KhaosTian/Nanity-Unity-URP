@@ -22,7 +22,7 @@ namespace Nanite
 
         // 原始顶点数据
         private static readonly int VerticesBufferID = Shader.PropertyToID("_VerticesBuffer");
-        private ComputeBuffer m_VerticesBuffer;
+        private GraphicsBuffer m_VerticesBuffer;
 
         // Meshlet 数据
         private static readonly int MeshletsBufferID = Shader.PropertyToID("_MeshletsBuffer");
@@ -31,23 +31,25 @@ namespace Nanite
         private static readonly int MeshletPrimitiveIndicesBufferID =
             Shader.PropertyToID("_MeshletPrimitiveIndicesBuffer");
 
-        private ComputeBuffer m_MeshletsBuffer;
-        private ComputeBuffer m_MeshletVertexIndicesBuffer;
-        private ComputeBuffer m_MeshletPrimitiveIndicesBuffer;
+        private GraphicsBuffer m_MeshletsBuffer;
+        private GraphicsBuffer m_MeshletVertexIndicesBuffer;
+        private GraphicsBuffer m_MeshletPrimitiveIndicesBuffer;
 
         // 可见实例数据（Meshlet 索引）
         private static readonly int VisibleMeshletIndicesBufferID = Shader.PropertyToID("_VisibleMeshletIndicesBuffer");
-        private ComputeBuffer m_VisibleMeshletIndicesBuffer;
+        private GraphicsBuffer m_VisibleMeshletIndicesBuffer;
 
         // 可见实例的索引缓冲区
         private static readonly int IndicesBufferID = Shader.PropertyToID("_IndicesBuffer");
-        private ComputeBuffer m_IndicesBuffer;
+        private GraphicsBuffer m_IndicesBuffer;
 
         // 间接参数缓冲区
         private static readonly int DispatchArgsBufferID = Shader.PropertyToID("_DispatchArgsBuffer");
         private static readonly int DrawArgsBufferID = Shader.PropertyToID("_DrawArgsBuffer");
-        private ComputeBuffer m_DrawArgsBuffer;
-        private ComputeBuffer m_DispatchArgsBuffer;
+        private GraphicsBuffer m_DrawArgsBuffer;
+        private GraphicsBuffer m_DispatchArgsBuffer;
+        private uint[] m_DispatchArgs = new uint[3] { 0, 1, 1 };
+        private uint[] m_DrawArgs = new uint[5] { MAX_PRIMS * 3, 0, 0, 0, 0 };
 
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
@@ -82,44 +84,46 @@ namespace Nanite
         private void InitBuffers()
         {
             // 间接参数缓冲区
-            m_DrawArgsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
+            m_DrawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 1, 5 * sizeof(uint));
             m_DrawArgsBuffer.name = nameof(m_DrawArgsBuffer);
+            m_DrawArgsBuffer.SetData(m_DrawArgs);
 
-            m_DispatchArgsBuffer = new ComputeBuffer(1, 3 * sizeof(uint), ComputeBufferType.IndirectArguments);
+            m_DispatchArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 1, 3 * sizeof(uint));
             m_DispatchArgsBuffer.name = nameof(m_DispatchArgsBuffer);
+            m_DispatchArgsBuffer.SetData(m_DispatchArgs);
 
             // 输入顶点坐标缓冲区
-            m_VerticesBuffer = new ComputeBuffer(m_SourceMesh.vertices.Length,
-                sizeof(float) * 3, ComputeBufferType.Structured);
+            m_VerticesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_SourceMesh.vertices.Length,
+                sizeof(float) * 3);
             m_VerticesBuffer.name = nameof(m_VerticesBuffer);
             m_VerticesBuffer.SetData(m_SourceMesh.vertices);
 
             // 输出索引缓冲区
             m_IndicesBuffer =
-                new ComputeBuffer(MAX_PRIMS * m_MeshletCount * 3, sizeof(uint), ComputeBufferType.Structured);
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured, MAX_PRIMS * m_MeshletCount * 3, sizeof(uint));
             m_IndicesBuffer.name = nameof(m_IndicesBuffer);
             m_IndicesBuffer.SetData(new int[MAX_PRIMS * m_MeshletCount]);
 
             // Meshlet缓冲区
-            m_MeshletsBuffer = new ComputeBuffer(m_MeshletCount, sizeof(uint) * 4, ComputeBufferType.Structured);
+            m_MeshletsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint) * 4);
             m_MeshletsBuffer.name = nameof(m_MeshletsBuffer);
             m_MeshletsBuffer.SetData(m_Collection.meshlets);
 
             // Meshlet Vertices索引缓冲区
             m_MeshletVertexIndicesBuffer =
-                new ComputeBuffer(m_Collection.vertices.Length, sizeof(uint), ComputeBufferType.Structured);
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_Collection.vertices.Length, sizeof(uint));
             m_MeshletVertexIndicesBuffer.name = nameof(m_MeshletVertexIndicesBuffer);
             m_MeshletVertexIndicesBuffer.SetData(m_Collection.vertices);
 
             // Meshlet Triangles索引缓冲区
-            m_MeshletPrimitiveIndicesBuffer = new ComputeBuffer(m_Collection.triangles.Length, sizeof(uint),
-                ComputeBufferType.Structured);
+            m_MeshletPrimitiveIndicesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,
+                m_Collection.triangles.Length, sizeof(uint));
             m_MeshletPrimitiveIndicesBuffer.name = nameof(m_MeshletPrimitiveIndicesBuffer);
             m_MeshletPrimitiveIndicesBuffer.SetData(m_Collection.triangles);
 
             // 可见 Meshlet 索引缓冲区
             m_VisibleMeshletIndicesBuffer =
-                new ComputeBuffer(m_MeshletCount, sizeof(uint), ComputeBufferType.Structured);
+                new GraphicsBuffer(GraphicsBuffer.Target.Append, m_MeshletCount, sizeof(uint));
             m_VisibleMeshletIndicesBuffer.name = nameof(m_VisibleMeshletIndicesBuffer);
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
         }
@@ -130,9 +134,8 @@ namespace Nanite
             CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
             CullingCompute.SetBuffer(m_CullingKernelID, DispatchArgsBufferID, m_DispatchArgsBuffer);
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
-
+            
             m_ProcessingKernelID = ProcessingCompute.FindKernel("ProcessingMain");
-
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, DrawArgsBufferID, m_DrawArgsBuffer);
             ProcessingCompute.SetBuffer(m_ProcessingKernelID, VisibleMeshletIndicesBufferID,
                 m_VisibleMeshletIndicesBuffer);
@@ -152,23 +155,15 @@ namespace Nanite
         private void Update()
         {
             if (!SelectedMeshletAsset) return;
-
-            // dispatchArgs 存储了所需的线程 x,y,z 维度
-            var dispatchArgs = new uint[3] { 0, 1, 1 };
-            m_DispatchArgsBuffer.SetData(dispatchArgs);
-
-            // visible count 存储在 dispatchArgs 的 x 维度
+            
+            m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
+            
             CullingCompute.Dispatch(m_CullingKernelID, m_KernelGroupX, 1, 1);
 
-            // 获取 dispatchArgs 在GPU上的结果
-            m_DispatchArgsBuffer.GetData(dispatchArgs);
-
-
-            // drawArgs 存储了实例索引数、实例个数（visible count ）等参数
-            var drawArgs = new uint[5] { MAX_PRIMS * 3, dispatchArgs[0], 0, 0, 0 };
-            m_DrawArgsBuffer.SetData(drawArgs);
+            GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DispatchArgsBuffer, sizeof(uint) * 0);
+            GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DrawArgsBuffer, sizeof(uint) * 1);
+            
             ProcessingCompute.DispatchIndirect(m_ProcessingKernelID, m_DispatchArgsBuffer);
-
             Graphics.DrawProceduralIndirect(m_MeshletMaterial, m_ProxyBounds, MeshTopology.Triangles, m_DrawArgsBuffer);
         }
 
