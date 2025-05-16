@@ -54,10 +54,8 @@ Shader "Nanite/MeshletRendering"
             v2f vert(appdata v)
             {
                 uint visibleMeshletIndex = v.instanceID;
-                uint triangleIndex = v.vertexID / 3;
-                uint vertexInTriangle = v.vertexID % 3;
 
-                uint currentIndex = 3 * (MAX_PRIMS * visibleMeshletIndex + triangleIndex) + vertexInTriangle;
+                uint currentIndex = 3 * (MAX_PRIMS * visibleMeshletIndex) + v.vertexID;
                 uint vertexIndex = _IndicesBuffer.Load(currentIndex * 4);
                 float3 position = _VerticesBuffer[vertexIndex].Position;
 
