@@ -2,7 +2,9 @@
 
 #include "MeshletCommon.hlsl"
 
-AppendStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+RWStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+RWStructuredBuffer<uint> _DispatchArgsBuffer;
+RWStructuredBuffer<uint> _DrawArgsBuffer;
 int _MeshletCount;
 
 bool IsVisible()
@@ -16,10 +18,13 @@ void CullingMain(
     uint meshletIndex : SV_DispatchThreadID)
 {
     if (meshletIndex >= (uint)_MeshletCount) return;
-    
+    _VisibleMeshletIndicesBuffer[meshletIndex] = 0;
     bool visible = IsVisible();
     if (visible)
     {
-        _VisibleMeshletIndicesBuffer.Append(meshletIndex);
+        uint visibleIndex = 0;
+        InterlockedAdd(_DispatchArgsBuffer[0], 1, visibleIndex);
+        InterlockedAdd(_DrawArgsBuffer[1], 1);
+        _VisibleMeshletIndicesBuffer[visibleIndex] = meshletIndex;
     }
 }

@@ -141,7 +141,7 @@ namespace Nanity
 
             // 可见 Meshlet 索引缓冲区
             m_VisibleMeshletIndicesBuffer =
-                new GraphicsBuffer(GraphicsBuffer.Target.Append, m_MeshletCount, sizeof(uint));
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint));
             m_VisibleMeshletIndicesBuffer.name = nameof(m_VisibleMeshletIndicesBuffer);
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
         }
@@ -151,6 +151,7 @@ namespace Nanity
             m_CullingKernelID = CullingCompute.FindKernel("CullingMain");
             CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
             CullingCompute.SetBuffer(m_CullingKernelID, DispatchArgsBufferID, m_DispatchArgsBuffer);
+            CullingCompute.SetBuffer(m_CullingKernelID, DrawArgsBufferID, m_DrawArgsBuffer);
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
 
             m_ProcessingKernelID = ProcessingCompute.FindKernel("ProcessingMain");
@@ -175,12 +176,10 @@ namespace Nanity
             if (!IsValid()) return;
 
             m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
-
+            m_DrawArgsBuffer.SetData(m_DrawArgs);
+            m_DispatchArgsBuffer.SetData(m_DispatchArgs);
+            
             CullingCompute.Dispatch(m_CullingKernelID, m_KernelGroupX, 1, 1);
-
-            GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DispatchArgsBuffer, sizeof(uint) * 0);
-            GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DrawArgsBuffer, sizeof(uint) * 1);
-
             ProcessingCompute.DispatchIndirect(m_ProcessingKernelID, m_DispatchArgsBuffer);
             Graphics.DrawProceduralIndirect(m_MeshletMaterial, m_ProxyBounds, MeshTopology.Triangles, m_DrawArgsBuffer);
         }
