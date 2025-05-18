@@ -5,8 +5,8 @@
 StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
 StructuredBuffer<uint> _DrawArgsBuffer;
 StructuredBuffer<Meshlet> _MeshletsBuffer;
-ByteAddressBuffer _MeshletPrimitiveIndicesBuffer;
-ByteAddressBuffer _MeshletVertexIndicesBuffer;
+StructuredBuffer<uint> _MeshletPrimitiveIndicesBuffer;
+StructuredBuffer<uint> _MeshletVertexIndicesBuffer;
 
 RWByteAddressBuffer _IndicesBuffer;
 
@@ -17,7 +17,7 @@ uint3 UnpackPrimitive(uint primitive)
 
 uint3 GetPrimitive(Meshlet m, uint index)
 {
-    return UnpackPrimitive(_MeshletPrimitiveIndicesBuffer.Load((m.PrimOffset + index) * 4));
+    return UnpackPrimitive(_MeshletPrimitiveIndicesBuffer[m.PrimOffset + index]);
 }
 
 [numthreads(MS_GROUP_SIZE, 1, 1)]
@@ -34,9 +34,9 @@ void ProcessingMain(uint localThreadId : SV_GroupThreadID, uint visibleMeshletIn
     if (localThreadId >= MAX_PRIMS) return;
     
     uint3 localTri = GetPrimitive(m, localThreadId); // 获取局部三角形索引
-    uint baseVtx0 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.x) * 4);
-    uint baseVtx1 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.y) * 4);
-    uint baseVtx2 = _MeshletVertexIndicesBuffer.Load((m.VertOffset + localTri.z) * 4);
+    uint baseVtx0 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.x];
+    uint baseVtx1 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.y];
+    uint baseVtx2 = _MeshletVertexIndicesBuffer[m.VertOffset + localTri.z];
 
     // 写入全局三角形索引缓冲区
     uint baseAddr = 3 * (MAX_PRIMS * visibleMeshletIndex + localThreadId);

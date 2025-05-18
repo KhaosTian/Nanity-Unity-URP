@@ -11,8 +11,7 @@ Shader "Nanity/MeshletRendering"
         {
 
             Cull Off
-            ZWrite On
-            ZTest LEqual
+
             
             CGPROGRAM
             #pragma vertex vert

@@ -50,6 +50,18 @@ namespace Nanity
         private GraphicsBuffer m_DispatchArgsBuffer;
         private readonly uint[] m_DispatchArgs = new uint[3] { 0, 1, 1 };
         private readonly uint[] m_DrawArgs = new uint[5] { MAX_PRIMS * 3, 0, 0, 0, 0 };
+        
+        // Mesh缓冲区
+        private static readonly int MeshInfosBufferID = Shader.PropertyToID("_MeshInfosBuffer");
+        private GraphicsBuffer m_MeshInfosBuffer;
+        
+        // Entity缓冲区
+        private static readonly int EntityParasBufferID = Shader.PropertyToID("_EntityParasBuffer");
+        private GraphicsBuffer m_EntityParasBuffer;
+        
+        // 包围体缓冲区
+        private static readonly int BoundsDataBufferID = Shader.PropertyToID("_BoundsDataBuffer");
+        private GraphicsBuffer m_BoundsDataBuffer;
 
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
@@ -117,12 +129,12 @@ namespace Nanity
 
             // Meshlet Vertices索引缓冲区
             m_MeshletVertexIndicesBuffer =
-                new GraphicsBuffer(GraphicsBuffer.Target.Raw, m_Collection.vertices.Length, sizeof(uint));
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_Collection.vertices.Length, sizeof(uint));
             m_MeshletVertexIndicesBuffer.name = nameof(m_MeshletVertexIndicesBuffer);
             m_MeshletVertexIndicesBuffer.SetData(m_Collection.vertices);
 
             // Meshlet Triangles索引缓冲区
-            m_MeshletPrimitiveIndicesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw,
+            m_MeshletPrimitiveIndicesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,
                 m_Collection.triangles.Length, sizeof(uint));
             m_MeshletPrimitiveIndicesBuffer.name = nameof(m_MeshletPrimitiveIndicesBuffer);
             m_MeshletPrimitiveIndicesBuffer.SetData(m_Collection.triangles);

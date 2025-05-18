@@ -11,7 +11,7 @@ bool IsVisible()
     return true;
 }
 
-[numthreads(KERNEL_SIZE_X, 1, 1)]
+[numthreads(AS_GROUP_SIZE, 1, 1)]
 void CullingMain(
     uint meshletIndex : SV_DispatchThreadID)
 {

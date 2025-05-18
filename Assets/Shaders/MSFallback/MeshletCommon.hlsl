@@ -4,7 +4,7 @@
 #define MAX_PRIMS 126
 #define MAX_VERTS 64
 #define MS_GROUP_SIZE 128
-#define KERNEL_SIZE_X 64
+#define AS_GROUP_SIZE 64
 
 struct Meshlet
 {

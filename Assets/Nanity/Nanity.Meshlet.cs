@@ -27,7 +27,25 @@ namespace Nanity
     public struct Vertex
     {
         public Vector3 Position;
-
+        public Vector3 Normal;
         public static int SIZE = sizeof(float) * 3;
+    }
+
+    public struct MeshInfo
+    {
+        public uint IndexSize;
+        public uint MeshletCount;
+    }
+
+    public struct EntityPara
+    {
+        public Matrix4x4 ModelMatrix; 
+    }
+
+    public struct CullData
+    {
+        public Vector4 BoundingSphere;
+        public uint NormalCone;
+        public float ApexOffset;
     }
 }
