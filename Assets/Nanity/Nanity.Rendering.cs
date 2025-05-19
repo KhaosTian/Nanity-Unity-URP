@@ -59,6 +59,10 @@ namespace Nanity
         private static readonly int EntityParasBufferID = Shader.PropertyToID("_EntityParasBuffer");
         private GraphicsBuffer m_EntityParasBuffer;
         
+        // EntityRef
+        private static readonly int EntityRefsBufferID = Shader.PropertyToID("_EntityRefsBuffer");
+        private GraphicsBuffer m_EntityRefsBuffer;
+        
         // 包围体缓冲区
         private static readonly int BoundsDataBufferID = Shader.PropertyToID("_BoundsDataBuffer");
         private GraphicsBuffer m_BoundsDataBuffer;
@@ -66,7 +70,8 @@ namespace Nanity
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
         private int m_MeshletCount;
-
+        private int m_EntityCount;
+        
         private Bounds m_ProxyBounds;
         private int m_KernelGroupX;
 
@@ -144,6 +149,13 @@ namespace Nanity
                 new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint));
             m_VisibleMeshletIndicesBuffer.name = nameof(m_VisibleMeshletIndicesBuffer);
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
+            
+            
+            m_EntityParasBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_EntityCount, sizeof(uint));
+            m_EntityParasBuffer.name = nameof(m_EntityParasBuffer);
+            
+            m_EntityRefsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint));
+            m_EntityRefsBuffer.name = nameof(m_EntityRefsBuffer);
         }
 
         private void SetupShaders()
