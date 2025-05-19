@@ -12,7 +12,7 @@ Shader "Nanity/MeshletRendering"
 
             Cull Off
 
-            
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -34,6 +34,12 @@ Shader "Nanity/MeshletRendering"
                 float3 Position;
             };
 
+            struct InstancePara
+            {
+                float4x4 model;
+                float4 color;
+            };
+
             struct appdata
             {
                 uint vertexID : SV_VertexID;
@@ -43,36 +49,57 @@ Shader "Nanity/MeshletRendering"
             struct v2f
             {
                 float4 vertex : SV_POSITION;
-                uint index : TEXCOORD1;
+                float4 color : COLOR;
             };
 
             StructuredBuffer<Vertex> _VerticesBuffer;
-            ByteAddressBuffer _IndicesBuffer;
             StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+            int _MeshletCountPerInstance;
+
+            StructuredBuffer<Meshlet> _MeshletsBuffer;
+            StructuredBuffer<uint> _MeshletPrimitiveIndicesBuffer;
+            StructuredBuffer<uint> _MeshletVertexIndicesBuffer;
+            StructuredBuffer<InstancePara> _InstanceParasBuffer;
+
+            uint3 UnpackPrimitive(uint primitive)
+            {
+                return uint3((primitive >> 0) & 0xFF, (primitive >> 8) & 0xFF, (primitive >> 16) & 0xFF);
+            }
+
+            uint3 GetPrimitive(Meshlet m, uint index)
+            {
+                return UnpackPrimitive(_MeshletPrimitiveIndicesBuffer[m.PrimOffset + index]);
+            }
 
             v2f vert(appdata v)
             {
                 uint visibleMeshletIndex = v.instanceID;
 
-                uint currentIndex = 3 * (MAX_PRIMS * visibleMeshletIndex) + v.vertexID;
-                uint vertexIndex = _IndicesBuffer.Load(currentIndex * 4);
+                uint globalMeshletIndex = _VisibleMeshletIndicesBuffer[visibleMeshletIndex];
+                uint instanceIndex = globalMeshletIndex / _MeshletCountPerInstance;
+                uint meshletIndex = globalMeshletIndex % _MeshletCountPerInstance;
+
+                Meshlet m = _MeshletsBuffer[meshletIndex];
+                uint primitiveIndex = v.vertexID / 3; // meshlet的第primitiveIndex个三角形
+                uint vertexInPrimitive = v.vertexID % 3; // 局部三角形的第vertexInPrimitive个顶点
+                // 获取局部三角形的三个索引，对于超过meshlet索引数量的，按照第一个三角形算（退化三角形）
+                uint3 localTri = v.vertexID < m.PrimCount * 3 ? GetPrimitive(m, primitiveIndex) : GetPrimitive(m, 0);
+                
+                uint vertexIndex = _MeshletVertexIndicesBuffer[m.VertOffset + localTri[vertexInPrimitive]];
                 float3 position = _VerticesBuffer[vertexIndex].Position;
 
+                InstancePara para = _InstanceParasBuffer[instanceIndex];
+                
                 v2f o;
+                unity_ObjectToWorld = para.model;
                 o.vertex = UnityObjectToClipPos(position);
-                uint globalIndex = _VisibleMeshletIndicesBuffer[visibleMeshletIndex];
-                o.index = globalIndex;
+                o.color = para.color;
                 return o;
             }
 
             float4 frag(v2f i) : SV_Target
             {
-                float3 col = float3(
-                    float(i.index & 1),
-                    float(i.index & 3) / 4,
-                    float(i.index & 7) / 8
-                );
-                return float4(col, 1);
+                return i.color;
             }
             ENDCG
 

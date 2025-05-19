@@ -37,9 +37,11 @@ namespace Nanity
         public uint MeshletCount;
     }
 
-    public struct EntityPara
+    public struct InstancePara
     {
-        public Matrix4x4 ModelMatrix; 
+        public Matrix4x4 ModelMatrix;
+        public Color InstanceColor;
+        public const int SIZE = sizeof(float) * 16 + sizeof(float) * 4;
     }
 
     public struct CullData
