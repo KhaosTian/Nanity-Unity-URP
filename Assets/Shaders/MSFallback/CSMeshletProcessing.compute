@@ -3,7 +3,7 @@
 #include "MeshletCommon.hlsl"
 
 StructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
-StructuredBuffer<uint> _DrawArgsBuffer;
+RWBuffer<uint> _DrawArgsBuffer;
 StructuredBuffer<Meshlet> _MeshletsBuffer;
 StructuredBuffer<uint> _MeshletPrimitiveIndicesBuffer;
 StructuredBuffer<uint> _MeshletVertexIndicesBuffer;

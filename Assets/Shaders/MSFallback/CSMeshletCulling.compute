@@ -3,8 +3,8 @@
 #include "MeshletCommon.hlsl"
 
 RWStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
-RWStructuredBuffer<uint> _DispatchArgsBuffer;
-RWStructuredBuffer<uint> _DrawArgsBuffer;
+RWBuffer<uint> _DispatchArgsBuffer;
+RWBuffer<uint> _DrawArgsBuffer;
 int _MeshletCount;
 
 bool IsVisible()

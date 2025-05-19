@@ -55,13 +55,13 @@ namespace Nanity
         private static readonly int MeshInfosBufferID = Shader.PropertyToID("_MeshInfosBuffer");
         private GraphicsBuffer m_MeshInfosBuffer;
         
-        // Entity缓冲区
-        private static readonly int EntityParasBufferID = Shader.PropertyToID("_EntityParasBuffer");
-        private GraphicsBuffer m_EntityParasBuffer;
+        // Instance缓冲区
+        private static readonly int InstanceParasBufferID = Shader.PropertyToID("_InstanceParasBuffer");
+        private GraphicsBuffer m_InstanceParasBuffer;
         
-        // EntityRef
-        private static readonly int EntityRefsBufferID = Shader.PropertyToID("_EntityRefsBuffer");
-        private GraphicsBuffer m_EntityRefsBuffer;
+        // InstanceRef
+        private static readonly int InstanceRefsBufferID = Shader.PropertyToID("_InstanceRefsBuffer");
+        private GraphicsBuffer m_InstanceRefsBuffer;
         
         // 包围体缓冲区
         private static readonly int BoundsDataBufferID = Shader.PropertyToID("_BoundsDataBuffer");
@@ -70,7 +70,7 @@ namespace Nanity
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
         private int m_MeshletCount;
-        private int m_EntityCount;
+        private int m_InstanceCount;
         
         private Bounds m_ProxyBounds;
         private int m_KernelGroupX;
@@ -151,11 +151,11 @@ namespace Nanity
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
             
             
-            m_EntityParasBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_EntityCount, sizeof(uint));
-            m_EntityParasBuffer.name = nameof(m_EntityParasBuffer);
+            /*m_InstanceParasBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_InstanceCount, sizeof(uint));
+            m_InstanceParasBuffer.name = nameof(m_InstanceParasBuffer);
             
-            m_EntityRefsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint));
-            m_EntityRefsBuffer.name = nameof(m_EntityRefsBuffer);
+            m_InstanceRefsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint));
+            m_InstanceRefsBuffer.name = nameof(m_InstanceRefsBuffer);*/
         }
 
         private void SetupShaders()
@@ -186,8 +186,7 @@ namespace Nanity
         private void Update()
         {
             if (!IsValid()) return;
-
-            m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
+            
             m_DrawArgsBuffer.SetData(m_DrawArgs);
             m_DispatchArgsBuffer.SetData(m_DispatchArgs);
             
