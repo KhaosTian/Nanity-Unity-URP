@@ -53,13 +53,9 @@ namespace Nanity
         private static readonly int InstanceParasBufferID = Shader.PropertyToID("_InstanceParasBuffer");
         private GraphicsBuffer m_InstanceParasBuffer;
 
-        // InstanceRef
-        private static readonly int InstanceRefsBufferID = Shader.PropertyToID("_InstanceRefsBuffer");
-        private GraphicsBuffer m_InstanceRefsBuffer;
-
         // 包围体缓冲区
-        private static readonly int BoundsDataBufferID = Shader.PropertyToID("_BoundsDataBuffer");
-        private GraphicsBuffer m_BoundsDataBuffer;
+        private static readonly int CullDataBufferID = Shader.PropertyToID("_CullDataBuffer");
+        private GraphicsBuffer m_CullDataBuffer;
 
         // Meshlet 总数
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
@@ -188,6 +184,7 @@ namespace Nanity
 
             CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
+            CullingCompute.SetBuffer(m_CullingKernelID, MeshletsBufferID, m_MeshletsBuffer);
 
 
             m_MeshletMaterial = new Material(Shader.Find("Nanity/MeshletRendering"));

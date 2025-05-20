@@ -13,6 +13,9 @@ namespace Nanity
         public uint PrimOffset;
         public uint VertCount;
         public uint PrimCount;
+        public Vector4 Sphere;
+        public uint NormalCone;
+        public float ApexOffset;
     }
 
     [Serializable]
@@ -22,6 +25,7 @@ namespace Nanity
         [HideInInspector] public uint[] triangles;
         [HideInInspector] public uint[] vertices;
         public Meshlet[] meshlets;
+        public BoundsData[] boundsDataArray;
     }
 
     public struct Vertex
@@ -44,7 +48,7 @@ namespace Nanity
         public const int SIZE = sizeof(float) * 16 + sizeof(float) * 4;
     }
 
-    public struct CullData
+    public struct BoundsData
     {
         public Vector4 BoundingSphere;
         public uint NormalCone;

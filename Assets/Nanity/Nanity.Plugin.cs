@@ -38,7 +38,11 @@ namespace Nanity
 
         [DllImport("NanityPlugin")]
         private static extern bool GetTriangles(IntPtr context, [Out] uint[] primitives, uint bufferSize);
+        [DllImport("NanityPlugin")]
+        private static extern uint GetBoundsCount(IntPtr context);
 
+        [DllImport("NanityPlugin")]
+        private static extern bool GetBounds(IntPtr context, [Out] BoundsData[] boundsDataArray, uint bufferSize);
        
         public static MeshletCollection ProcessMesh(uint[] indices, Vector3[] vertices)
         {
@@ -88,6 +92,12 @@ namespace Nanity
                     collection.triangles = new uint[triangleCount];
                     if (!GetTriangles(context, collection.triangles, triangleCount))
                         throw new Exception("Failed to get triangles data");
+                    
+                    // Get bounds data array
+                    var boundsCount = GetBoundsCount(context);
+                    collection.boundsDataArray = new BoundsData[boundsCount];
+                    if (!GetBounds(context, collection.boundsDataArray, boundsCount))
+                        throw new Exception("Failed to get bounds data");
 
                     return collection;
                 }
