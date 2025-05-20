@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Nanity
 {
@@ -14,6 +15,7 @@ namespace Nanity
         private int m_CullingKernelID;
 
         // Meshlet 资产相关
+        public List<MeshletAsset> MeshletAssets = new List<MeshletAsset>();
         public MeshletAsset SelectedMeshletAsset;
         private MeshletCollection m_Collection;
         private Mesh m_SourceMesh;
