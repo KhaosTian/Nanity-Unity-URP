@@ -92,8 +92,25 @@ namespace Nanity
 
         private bool IsValid()
         {
-            return SelectedMeshletAsset && SelectedMeshletAsset.SourceMesh &&
-                   SelectedMeshletAsset.SourceMesh.isReadable;
+            if (!SelectedMeshletAsset)
+            {
+                Debug.LogWarning("Selected meshlet asset is missing.");
+                return false;
+            }
+
+            if (!SelectedMeshletAsset.SourceMesh)
+            {
+                Debug.LogWarning("Source mesh is missing.");
+                return false;
+            }
+
+            if (!SelectedMeshletAsset.SourceMesh.isReadable)
+            {
+                Debug.LogWarning("Source mesh is not readable.");
+                return false;
+            }
+
+            return true;
         }
 
         private void InitInstanceParasBuffer()
@@ -107,9 +124,9 @@ namespace Nanity
                     int index = r * Column + c;
 
                     var modelMatrix = Matrix4x4.TRS(
-                        parentPosition + new Vector3(20 * c, 40 * r, 24),
+                        parentPosition + new Vector3(c, r, 0),
                         Quaternion.identity, // No rotation
-                        Vector3.one// No scaling
+                        Vector3.one // No scaling
                     );
 
                     instanceParas[index].ModelMatrix = modelMatrix;
@@ -208,7 +225,7 @@ namespace Nanity
             m_VisibleMeshletIndicesBuffer?.Release();
 
             m_DrawArgsBuffer?.Release();
-            
+
             m_InstanceParasBuffer?.Release();
         }
     }

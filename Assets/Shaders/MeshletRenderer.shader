@@ -1,5 +1,9 @@
 Shader "Nanity/MeshletRendering"
 {
+    Properties
+    {
+        _BackFaceColor("Back Face Color", Color) = (0,0,0,1)
+    }
     SubShader
     {
         Tags
@@ -61,6 +65,8 @@ Shader "Nanity/MeshletRendering"
             StructuredBuffer<uint> _MeshletVertexIndicesBuffer;
             StructuredBuffer<InstancePara> _InstanceParasBuffer;
 
+            float4 _BackfaceColor;
+
             uint3 UnpackPrimitive(uint primitive)
             {
                 return uint3((primitive >> 0) & 0xFF, (primitive >> 8) & 0xFF, (primitive >> 16) & 0xFF);
@@ -84,12 +90,12 @@ Shader "Nanity/MeshletRendering"
                 uint vertexInPrimitive = v.vertexID % 3; // 局部三角形的第vertexInPrimitive个顶点
                 // 获取局部三角形的三个索引，对于超过meshlet索引数量的，按照第一个三角形算（退化三角形）
                 uint3 localTri = v.vertexID < m.PrimCount * 3 ? GetPrimitive(m, primitiveIndex) : GetPrimitive(m, 0);
-                
+
                 uint vertexIndex = _MeshletVertexIndicesBuffer[m.VertOffset + localTri[vertexInPrimitive]];
                 float3 position = _VerticesBuffer[vertexIndex].Position;
 
                 InstancePara para = _InstanceParasBuffer[instanceIndex];
-                
+
                 v2f o;
                 unity_ObjectToWorld = para.model;
                 o.vertex = UnityObjectToClipPos(position);
@@ -97,9 +103,9 @@ Shader "Nanity/MeshletRendering"
                 return o;
             }
 
-            float4 frag(v2f i) : SV_Target
+            float4 frag(v2f i, bool facing : SV_IsFrontFace) : SV_Target
             {
-                return i.color;
+                return facing ? i.color : _BackfaceColor;
             }
             ENDCG
 
