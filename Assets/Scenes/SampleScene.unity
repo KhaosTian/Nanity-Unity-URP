@@ -390,7 +390,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 5000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -456,7 +456,7 @@ MonoBehaviour:
   CullingCompute: {fileID: 7200000, guid: e317a1d6611fe0d45af113487101c71b, type: 3}
   RenderingCamera: {fileID: 1720165088}
   MeshletAssets: []
-  SelectedMeshletAsset: {fileID: 11400000, guid: 4376ba7178537e748a2a018038234105,
+  SelectedMeshletAsset: {fileID: 11400000, guid: ab9d86d753ba2be4980801a1602110e8,
     type: 2}
   Row: 1
   Column: 1

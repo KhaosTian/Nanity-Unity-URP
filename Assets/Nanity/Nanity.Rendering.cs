@@ -137,10 +137,10 @@ namespace Nanity
             m_DrawArgsBuffer.SetData(m_DrawArgs);
 
             // 输入顶点坐标缓冲区
-            m_VerticesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_SourceMesh.vertices.Length,
+            m_VerticesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_Collection.optimizedVertices.Length,
                 sizeof(float) * 3);
             m_VerticesBuffer.name = nameof(m_VerticesBuffer);
-            m_VerticesBuffer.SetData(m_SourceMesh.vertices);
+            m_VerticesBuffer.SetData(m_Collection.optimizedVertices);
 
             // Meshlet缓冲区
             m_MeshletsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCount, sizeof(uint) * 4);

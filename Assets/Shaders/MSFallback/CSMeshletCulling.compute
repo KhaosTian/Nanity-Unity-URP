@@ -32,6 +32,7 @@ float4 UnpackCone(uint packed)
 
 bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3 viewPos)
 {
+    return true;
     // Do a cull test of the bounding sphere against the view frustum planes.
     const float4 center = mul(float4(boundsData.BoundingSphere.xyz, 1.0), modelToWorld);
     const float radius = boundsData.BoundingSphere.w * scale;

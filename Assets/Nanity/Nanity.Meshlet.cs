@@ -19,10 +19,11 @@ namespace Nanity
     [StructLayout(LayoutKind.Sequential)]
     public class MeshletCollection
     {
-        public uint[] triangles;
-        public uint[] vertices;
+        [HideInInspector]public uint[] triangles;
+        [HideInInspector]public uint[] vertices;
         public Meshlet[] meshlets;
         public BoundsData[] boundsDataArray;
+        [HideInInspector]public Vector3[] optimizedVertices ;
     }
 
     public struct Vertex
