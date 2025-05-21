@@ -3,10 +3,59 @@
 #include "MeshletCommon.hlsl"
 
 AppendStructuredBuffer<uint> _VisibleMeshletIndicesBuffer;
+StructuredBuffer<BoundsData> _MeshletBoundsDataBuffer;
+StructuredBuffer<InstancePara> _InstanceParasBuffer;
+
 int _MeshletCount;
-bool IsVisible()
+int _MeshletCountPerInstance;
+float3 _ViewPos;
+float4 _CullingPlaneVectorArray[6];
+
+bool IsConeDegenerate(BoundsData boundsData)
 {
-    // 暂时不进行测试
+    return (boundsData.NormalCone >> 24) == 0xff;
+}
+
+float4 UnpackCone(uint packed)
+{
+    float4 v;
+    v.x = float((packed >> 0) & 0xFF);
+    v.y = float((packed >> 8) & 0xFF);
+    v.z = float((packed >> 16) & 0xFF);
+    v.w = float((packed >> 24) & 0xFF);
+
+    v = v / 255.0;
+    v.xyz = v.xyz * 2.0 - 1.0;
+
+    return v;
+}
+
+bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3 viewPos)
+{
+    // Do a cull test of the bounding sphere against the view frustum planes.
+    const float4 center = mul(float4(boundsData.BoundingSphere.xyz, 1.0), modelToWorld);
+    const float radius = boundsData.BoundingSphere.w * scale;
+    
+    [unroll]
+    for (uint i = 0; i < 6; ++i)
+        if (dot(center, _CullingPlaneVectorArray[i]) < -radius) return false;
+    
+    // Do normal cone culling
+    if (IsConeDegenerate(boundsData)) return true; // Cone is degenerate - spread is wider than a hemisphere.
+
+    // Unpack the normal cone from its 8-bit uint compression
+    const float4 normalCone = UnpackCone(boundsData.NormalCone);
+
+    // Transform axis to world space
+    const float3 axis = normalize(mul(normalCone.xyz, (float3x3)modelToWorld));
+
+    // Offset the normal cone axis from the meshlet center-point - make sure to account for world scaling
+    const float3 apex = boundsData.ConeApex;
+    const float3 view = normalize(viewPos - apex);
+
+    // The normal cone w-component stores -cos(angle + 90 deg)
+    // This is the min dot product along the inverted axis from which all the meshlet's triangles are backface
+    if (dot(view, -axis) > normalCone.w) return false;
     return true;
 }
 
@@ -14,10 +63,15 @@ bool IsVisible()
 void CullingMain(
     uint dtid : SV_DispatchThreadID)
 {
-
     if (dtid >= (uint)_MeshletCount) return;
 
-    bool visible = IsVisible();
+    uint instanceIndex = dtid / _MeshletCountPerInstance;
+    uint meshletIndex = dtid % _MeshletCountPerInstance;
+
+    BoundsData boundsData = _MeshletBoundsDataBuffer[meshletIndex];
+    InstancePara para = _InstanceParasBuffer[instanceIndex];
+
+    bool visible = IsVisible(boundsData, para.modelToWorld, 1, _ViewPos);
     if (visible)
     {
         _VisibleMeshletIndicesBuffer.Append(dtid);

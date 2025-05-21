@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using Vector3 = System.Numerics.Vector3;
+using UnityEngine.Serialization;
 
 namespace Nanity
 {
@@ -13,17 +13,14 @@ namespace Nanity
         public uint PrimOffset;
         public uint VertCount;
         public uint PrimCount;
-        public Vector4 Sphere;
-        public uint NormalCone;
-        public float ApexOffset;
     }
 
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public class MeshletCollection
     {
-        [HideInInspector] public uint[] triangles;
-        [HideInInspector] public uint[] vertices;
+        public uint[] triangles;
+        public uint[] vertices;
         public Meshlet[] meshlets;
         public BoundsData[] boundsDataArray;
     }
@@ -43,15 +40,18 @@ namespace Nanity
 
     public struct InstancePara
     {
-        public Matrix4x4 ModelMatrix;
+        public Matrix4x4 ModelToWorld;
         public Color InstanceColor;
         public const int SIZE = sizeof(float) * 16 + sizeof(float) * 4;
     }
 
+    [Serializable]
     public struct BoundsData
     {
         public Vector4 BoundingSphere;
         public uint NormalCone;
-        public float ApexOffset;
+        public Vector3 ConeApex;
+        public const int SIZE = sizeof(float) * 4 + sizeof(uint) * 1 + sizeof(float) * 3;
     }
+    
 }

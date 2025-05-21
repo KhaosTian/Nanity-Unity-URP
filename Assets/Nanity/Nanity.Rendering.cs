@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Nanity
 {
@@ -12,6 +13,7 @@ namespace Nanity
         // Shader 相关
         private Material m_MeshletMaterial;
         public ComputeShader CullingCompute;
+        public Camera RenderingCamera;
         private int m_CullingKernelID;
 
         // Meshlet 资产相关
@@ -54,16 +56,26 @@ namespace Nanity
         private GraphicsBuffer m_InstanceParasBuffer;
 
         // 包围体缓冲区
-        private static readonly int CullDataBufferID = Shader.PropertyToID("_CullDataBuffer");
-        private GraphicsBuffer m_CullDataBuffer;
+        private static readonly int MeshletBoundsDataBufferID = Shader.PropertyToID("_MeshletBoundsDataBuffer");
+        private GraphicsBuffer m_MeshletBoundsDataBuffer;
 
         // Meshlet 总数
+        
+        private static readonly int ConstantBufferID = Shader.PropertyToID("_ConstantBuffer");
+        private GraphicsBuffer m_ConstantBuffer;
+        
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
         private static readonly int InstanceCountID = Shader.PropertyToID("_InstanceCount");
         private static readonly int MeshletCountPerInstanceID = Shader.PropertyToID("_MeshletCountPerInstance");
+        private static readonly int ViewPosID = Shader.PropertyToID("_ViewPos");
+        private static readonly int CullingPlaneVectorArrayID = Shader.PropertyToID("_CullingPlaneVectorArray");
+        
+        private readonly Vector4[] m_CullingPlaneVectorArray = new Vector4[6];
+        private readonly Plane[] m_CullingPlanes = new Plane[6];
+        private Vector3 m_ViewPos;
         private int m_MeshletCount;
-        private int m_InstanceCount;
         private int m_MeshletCountPerInstance;
+        private int m_InstanceCount;
 
         private Bounds m_ProxyBounds;
         private int m_KernelGroupX;
@@ -77,16 +89,17 @@ namespace Nanity
 
             m_Collection = SelectedMeshletAsset.Collection;
             m_SourceMesh = SelectedMeshletAsset.SourceMesh;
-
+            m_ProxyBounds = new Bounds(Vector3.zero, 1000.0f * Vector3.one);
+            
             m_InstanceCount = Row * Column;
             m_MeshletCountPerInstance = SelectedMeshletAsset.Collection.meshlets.Length;
-            m_MeshletCount = m_MeshletCountPerInstance * m_InstanceCount;
-            m_ProxyBounds = new Bounds(Vector3.zero, 1000.0f * Vector3.one);
-            m_KernelGroupX = Mathf.CeilToInt(1.0f / KERNEL_SIZE_X * m_MeshletCount); // 计算剔除所需的线程组数
-
+            m_MeshletCount = m_MeshletCountPerInstance *  m_InstanceCount;
+            m_KernelGroupX = Mathf.CeilToInt(1.0f / KERNEL_SIZE_X * m_MeshletCount);
+            
             InitBuffers();
-            SetupShaders();
+            InitShaders();
         }
+        
 
         private bool IsValid()
         {
@@ -108,34 +121,12 @@ namespace Nanity
                 return false;
             }
 
-            return true;
-        }
-
-        private void InitInstanceParasBuffer()
-        {
-            var instanceParas = new InstancePara[m_InstanceCount];
-            var parentPosition = transform.position;
-            for (int r = 0; r < Row; r++)
+            if (!RenderingCamera)
             {
-                for (int c = 0; c < Column; c++)
-                {
-                    int index = r * Column + c;
-
-                    var modelMatrix = Matrix4x4.TRS(
-                        parentPosition + new Vector3(c, r, 0),
-                        Quaternion.identity, // No rotation
-                        Vector3.one // No scaling
-                    );
-
-                    instanceParas[index].ModelMatrix = modelMatrix;
-                    instanceParas[index].InstanceColor = Random.ColorHSV();
-                }
+                Debug.LogWarning("Camera is missing.");
             }
 
-            m_InstanceParasBuffer =
-                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_InstanceCount, InstancePara.SIZE);
-            m_InstanceParasBuffer.name = nameof(m_InstanceParasBuffer);
-            m_InstanceParasBuffer.SetData(instanceParas);
+            return true;
         }
 
         private void InitBuffers()
@@ -167,46 +158,81 @@ namespace Nanity
                 m_Collection.triangles.Length, sizeof(uint));
             m_MeshletPrimitiveIndicesBuffer.name = nameof(m_MeshletPrimitiveIndicesBuffer);
             m_MeshletPrimitiveIndicesBuffer.SetData(m_Collection.triangles);
+            
+            // Meshlet BoundsData缓冲区
+            m_MeshletBoundsDataBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCountPerInstance,
+                BoundsData.SIZE);
+            m_MeshletBoundsDataBuffer.name = nameof(m_MeshletBoundsDataBuffer);
+            m_MeshletBoundsDataBuffer.SetData(m_Collection.boundsDataArray);
 
             // 可见 Meshlet 索引缓冲区
             m_VisibleMeshletIndicesBuffer =
                 new GraphicsBuffer(GraphicsBuffer.Target.Append, m_MeshletCount, sizeof(uint));
             m_VisibleMeshletIndicesBuffer.name = nameof(m_VisibleMeshletIndicesBuffer);
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
+            
+            var instanceParas = new InstancePara[m_InstanceCount];
+            var parentPosition = transform.position;
+            for (int r = 0; r < Row; r++)
+            {
+                for (int c = 0; c < Column; c++)
+                {
+                    int index = r * Column + c;
 
+                    var modelToWorld = Matrix4x4.TRS(
+                        parentPosition + new Vector3(c, r, 0),
+                        Quaternion.identity,
+                        Vector3.one
+                    );
 
-            InitInstanceParasBuffer();
+                    instanceParas[index].ModelToWorld = modelToWorld;
+                    instanceParas[index].InstanceColor = Random.ColorHSV();
+                }
+            }
+
+            m_InstanceParasBuffer =
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_InstanceCount, InstancePara.SIZE);
+            m_InstanceParasBuffer.name = nameof(m_InstanceParasBuffer);
+            m_InstanceParasBuffer.SetData(instanceParas);
         }
 
-        private void SetupShaders()
+        private void InitShaders()
         {
             m_CullingKernelID = CullingCompute.FindKernel("CullingMain");
-
-            CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
-            CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
-            CullingCompute.SetBuffer(m_CullingKernelID, MeshletsBufferID, m_MeshletsBuffer);
-
-
             m_MeshletMaterial = new Material(Shader.Find("Nanity/MeshletRendering"));
-
-            m_MeshletMaterial.SetInt(MeshletCountID, m_MeshletCount);
-            m_MeshletMaterial.SetInt(InstanceCountID, m_InstanceCount);
+            
+            CullingCompute.SetInt(MeshletCountID, m_MeshletCount);
+            CullingCompute.SetInt(MeshletCountPerInstanceID, m_MeshletCountPerInstance);
+            CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
+            CullingCompute.SetBuffer(m_CullingKernelID, MeshletBoundsDataBufferID, m_MeshletBoundsDataBuffer);
+            CullingCompute.SetBuffer(m_CullingKernelID, InstanceParasBufferID, m_InstanceParasBuffer);
+            
             m_MeshletMaterial.SetInt(MeshletCountPerInstanceID, m_MeshletCountPerInstance);
-
             m_MeshletMaterial.SetBuffer(VerticesBufferID, m_VerticesBuffer);
-
             m_MeshletMaterial.SetBuffer(VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
-
             m_MeshletMaterial.SetBuffer(MeshletsBufferID, m_MeshletsBuffer);
             m_MeshletMaterial.SetBuffer(MeshletVertexIndicesBufferID, m_MeshletVertexIndicesBuffer);
             m_MeshletMaterial.SetBuffer(MeshletPrimitiveIndicesBufferID, m_MeshletPrimitiveIndicesBuffer);
-
             m_MeshletMaterial.SetBuffer(InstanceParasBufferID, m_InstanceParasBuffer);
         }
 
+        private void UpdateFrame()
+        {
+            // Global constants
+            m_ViewPos = RenderingCamera.transform.position;
+            GeometryUtility.CalculateFrustumPlanes(RenderingCamera, m_CullingPlanes);
+            for (int i = 0; i < 6; i++)
+            {
+                var normal = m_CullingPlanes[i].normal;
+                m_CullingPlaneVectorArray[i] = new Vector4(normal.x, normal.y, normal.z, m_CullingPlanes[i].distance);
+            }
+            CullingCompute.SetVector(ViewPosID, m_ViewPos);
+            CullingCompute.SetVectorArray(CullingPlaneVectorArrayID, m_CullingPlaneVectorArray);
+        }
         private void Update()
         {
             if (!IsValid()) return;
+            UpdateFrame();
             m_VisibleMeshletIndicesBuffer.SetCounterValue(0);
             CullingCompute.Dispatch(m_CullingKernelID, m_KernelGroupX, 1, 1);
             GraphicsBuffer.CopyCount(m_VisibleMeshletIndicesBuffer, m_DrawArgsBuffer, sizeof(uint) * 1);
@@ -216,15 +242,12 @@ namespace Nanity
         private void OnDestroy()
         {
             m_VerticesBuffer?.Release();
-
             m_MeshletsBuffer?.Release();
             m_MeshletVertexIndicesBuffer?.Release();
             m_MeshletPrimitiveIndicesBuffer?.Release();
-
+            m_MeshletBoundsDataBuffer?.Release();
             m_VisibleMeshletIndicesBuffer?.Release();
-
             m_DrawArgsBuffer?.Release();
-
             m_InstanceParasBuffer?.Release();
         }
     }

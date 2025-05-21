@@ -54,6 +54,7 @@ Shader "Nanity/MeshletRendering"
             {
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+                uint index: TEXCOORD0;
             };
 
             StructuredBuffer<Vertex> _VerticesBuffer;
@@ -100,12 +101,19 @@ Shader "Nanity/MeshletRendering"
                 unity_ObjectToWorld = para.model;
                 o.vertex = UnityObjectToClipPos(position);
                 o.color = para.color;
+                o.index = globalMeshletIndex;
                 return o;
             }
 
             float4 frag(v2f i, bool facing : SV_IsFrontFace) : SV_Target
             {
-                return facing ? i.color : _BackfaceColor;
+                float4 col = float4(
+                    float(i.index & 1),
+                    float(i.index & 3) / 4,
+                    float(i.index & 7) / 8,
+                    1
+                );
+                return facing ? col : _BackfaceColor;
             }
             ENDCG
 

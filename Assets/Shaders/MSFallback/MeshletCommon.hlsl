@@ -19,4 +19,17 @@ struct Vertex
     float3 Position;
 };
 
+
+struct BoundsData
+{
+    float4 BoundingSphere;
+    uint NormalCone;
+    float3 ConeApex;
+};
+
+struct InstancePara
+{
+    float4x4 modelToWorld;
+    float4 color;
+};
 #endif // MESHLET_COMMON_INCLUDED
