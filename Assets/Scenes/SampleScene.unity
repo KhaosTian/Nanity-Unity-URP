@@ -418,7 +418,7 @@ Transform:
   m_GameObject: {fileID: 1720165085}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 49, y: 22, z: -267}
+  m_LocalPosition: {x: 2357, y: 983, z: -2795}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -456,7 +456,7 @@ MonoBehaviour:
   CullingCompute: {fileID: 7200000, guid: e317a1d6611fe0d45af113487101c71b, type: 3}
   RenderingCamera: {fileID: 1720165088}
   MeshletAssets: []
-  SelectedMeshletAsset: {fileID: 11400000, guid: ab9d86d753ba2be4980801a1602110e8,
+  SelectedMeshletAsset: {fileID: 11400000, guid: 4376ba7178537e748a2a018038234105,
     type: 2}
   Row: 1
   Column: 1

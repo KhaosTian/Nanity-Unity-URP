@@ -32,15 +32,14 @@ float4 UnpackCone(uint packed)
 
 bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3 viewPos)
 {
-    return true;
     // Do a cull test of the bounding sphere against the view frustum planes.
     const float4 center = mul(float4(boundsData.BoundingSphere.xyz, 1.0), modelToWorld);
     const float radius = boundsData.BoundingSphere.w * scale;
-    
+
     [unroll]
     for (uint i = 0; i < 6; ++i)
         if (dot(center, _CullingPlaneVectorArray[i]) < -radius) return false;
-    
+
     // Do normal cone culling
     if (IsConeDegenerate(boundsData)) return true; // Cone is degenerate - spread is wider than a hemisphere.
 
@@ -51,7 +50,7 @@ bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3
     const float3 axis = normalize(mul(normalCone.xyz, (float3x3)modelToWorld));
 
     // Offset the normal cone axis from the meshlet center-point - make sure to account for world scaling
-    const float3 apex = boundsData.ConeApex;
+    const float3 apex = center.xyz - axis * boundsData.ApexOffset * scale;
     const float3 view = normalize(viewPos - apex);
 
     // The normal cone w-component stores -cos(angle + 90 deg)

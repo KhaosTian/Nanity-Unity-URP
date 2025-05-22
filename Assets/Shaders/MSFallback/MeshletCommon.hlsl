@@ -24,7 +24,7 @@ struct BoundsData
 {
     float4 BoundingSphere;
     uint NormalCone;
-    float3 ConeApex;
+    float ApexOffset;
 };
 
 struct InstancePara

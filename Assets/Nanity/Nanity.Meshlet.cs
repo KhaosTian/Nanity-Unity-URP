@@ -51,8 +51,8 @@ namespace Nanity
     {
         public Vector4 BoundingSphere;
         public uint NormalCone;
-        public Vector3 ConeApex;
-        public const int SIZE = sizeof(float) * 4 + sizeof(uint) * 1 + sizeof(float) * 3;
+        public float ApexOffset;
+        public const int SIZE = sizeof(float) * 4 + sizeof(uint) * 1 + sizeof(float) * 1;
     }
     
 }

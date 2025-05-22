@@ -110,7 +110,7 @@ Shader "Nanity/MeshletRendering"
                 float4 col = float4(
                     float(i.index & 1),
                     float(i.index & 3) / 4,
-                    float(i.index & 7) / 8,
+                    float(i.index + 1 & 7) / 8,
                     1
                 );
                 return facing ? col : _BackfaceColor;
