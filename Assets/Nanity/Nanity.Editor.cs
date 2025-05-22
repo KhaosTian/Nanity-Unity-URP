@@ -21,10 +21,20 @@ namespace Nanity
         private bool m_ProcessingMesh = false;
         private string m_StatusMessage = "";
 
+        private BuildSettings m_Settings = new BuildSettings();
+        
         [MenuItem("Window/Nanity/Meshlet Generator")]
         public static void ShowWindow()
         {
             GetWindow<MeshletGenerator>("Meshlet Generator");
+        }
+
+        private void OnEnable()
+        {
+            m_Settings.EnableFuse = true;
+            m_Settings.EnableOpt = true;
+            m_Settings.EnableRemap = true;
+            m_Settings.ConeWeight = 0.25f;
         }
 
         private void OnGUI()
@@ -56,7 +66,12 @@ namespace Nanity
             }
 
             EditorGUILayout.EndHorizontal();
-
+            
+            m_Settings.EnableFuse = EditorGUILayout.Toggle("Enable Fuse", m_Settings.EnableFuse);
+            m_Settings.EnableOpt = EditorGUILayout.Toggle("Enable Opt", m_Settings.EnableOpt);
+            m_Settings.EnableRemap = EditorGUILayout.Toggle("Enable Remap", m_Settings.EnableRemap);
+            m_Settings.ConeWeight = EditorGUILayout.FloatField("Cone Weight", m_Settings.ConeWeight);
+            
             // Asset name
             m_AssetName = EditorGUILayout.TextField("Asset Name", m_AssetName);
             // Status message
@@ -100,7 +115,7 @@ namespace Nanity
                 }
 
                 // Process the mesh
-                var collection = NanityPlugin.ProcessMesh(uintTriangles, vertices);
+                var collection = NanityPlugin.ProcessMesh(uintTriangles, vertices, m_Settings);
 
                 // Create and save the asset
                 var asset = CreateInstance<MeshletAsset>();

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 namespace Nanity
 {
@@ -60,16 +62,16 @@ namespace Nanity
         private GraphicsBuffer m_MeshletBoundsDataBuffer;
 
         // Meshlet 总数
-        
+
         private static readonly int ConstantBufferID = Shader.PropertyToID("_ConstantBuffer");
         private GraphicsBuffer m_ConstantBuffer;
-        
+
         private static readonly int MeshletCountID = Shader.PropertyToID("_MeshletCount");
         private static readonly int InstanceCountID = Shader.PropertyToID("_InstanceCount");
         private static readonly int MeshletCountPerInstanceID = Shader.PropertyToID("_MeshletCountPerInstance");
         private static readonly int ViewPosID = Shader.PropertyToID("_ViewPos");
         private static readonly int CullingPlaneVectorArrayID = Shader.PropertyToID("_CullingPlaneVectorArray");
-        
+
         private readonly Vector4[] m_CullingPlaneVectorArray = new Vector4[6];
         private readonly Plane[] m_CullingPlanes = new Plane[6];
         private Vector3 m_ViewPos;
@@ -83,6 +85,8 @@ namespace Nanity
         public int Row = 3;
         public int Column = 3;
 
+        public int SelectedMeshletIndex = -1;
+
         private void Start()
         {
             if (!IsValid()) return;
@@ -90,16 +94,16 @@ namespace Nanity
             m_Collection = SelectedMeshletAsset.Collection;
             m_SourceMesh = SelectedMeshletAsset.SourceMesh;
             m_ProxyBounds = new Bounds(Vector3.zero, 10000.0f * Vector3.one);
-            
+
             m_InstanceCount = Row * Column;
             m_MeshletCountPerInstance = SelectedMeshletAsset.Collection.meshlets.Length;
-            m_MeshletCount = m_MeshletCountPerInstance *  m_InstanceCount;
+            m_MeshletCount = m_MeshletCountPerInstance * m_InstanceCount;
             m_KernelGroupX = Mathf.CeilToInt(1.0f / KERNEL_SIZE_X * m_MeshletCount);
-            
+
             InitBuffers();
             InitShaders();
         }
-        
+
 
         private bool IsValid()
         {
@@ -137,7 +141,8 @@ namespace Nanity
             m_DrawArgsBuffer.SetData(m_DrawArgs);
 
             // 输入顶点坐标缓冲区
-            m_VerticesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_Collection.optimizedVertices.Length,
+            m_VerticesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,
+                m_Collection.optimizedVertices.Length,
                 sizeof(float) * 3);
             m_VerticesBuffer.name = nameof(m_VerticesBuffer);
             m_VerticesBuffer.SetData(m_Collection.optimizedVertices);
@@ -158,7 +163,7 @@ namespace Nanity
                 m_Collection.triangles.Length, sizeof(uint));
             m_MeshletPrimitiveIndicesBuffer.name = nameof(m_MeshletPrimitiveIndicesBuffer);
             m_MeshletPrimitiveIndicesBuffer.SetData(m_Collection.triangles);
-            
+
             // Meshlet BoundsData缓冲区
             m_MeshletBoundsDataBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, m_MeshletCountPerInstance,
                 BoundsData.SIZE);
@@ -170,7 +175,7 @@ namespace Nanity
                 new GraphicsBuffer(GraphicsBuffer.Target.Append, m_MeshletCount, sizeof(uint));
             m_VisibleMeshletIndicesBuffer.name = nameof(m_VisibleMeshletIndicesBuffer);
             m_VisibleMeshletIndicesBuffer.SetData(new int[m_MeshletCount]);
-            
+
             var instanceParas = new InstancePara[m_InstanceCount];
             var parentPosition = transform.position;
             for (int r = 0; r < Row; r++)
@@ -180,12 +185,14 @@ namespace Nanity
                     int index = r * Column + c;
 
                     var modelToWorld = Matrix4x4.TRS(
-                        parentPosition + new Vector3(c, r, 0) * 500,
-                        Quaternion.identity, 
+                        parentPosition + new Vector3(c * m_SourceMesh.bounds.extents.x * 2,
+                            r * m_SourceMesh.bounds.extents.y * 2, 0),
+                        Quaternion.identity,
                         Vector3.one
                     );
 
                     instanceParas[index].ModelToWorld = modelToWorld;
+                    instanceParas[index].ModelToWorldIT = modelToWorld.inverse.transpose;
                     instanceParas[index].InstanceColor = Random.ColorHSV();
                 }
             }
@@ -206,7 +213,7 @@ namespace Nanity
             CullingCompute.SetBuffer(m_CullingKernelID, VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
             CullingCompute.SetBuffer(m_CullingKernelID, MeshletBoundsDataBufferID, m_MeshletBoundsDataBuffer);
             CullingCompute.SetBuffer(m_CullingKernelID, InstanceParasBufferID, m_InstanceParasBuffer);
-            
+
             m_MeshletMaterial.SetInt(MeshletCountPerInstanceID, m_MeshletCountPerInstance);
             m_MeshletMaterial.SetBuffer(VerticesBufferID, m_VerticesBuffer);
             m_MeshletMaterial.SetBuffer(VisibleMeshletIndicesBufferID, m_VisibleMeshletIndicesBuffer);
@@ -226,9 +233,14 @@ namespace Nanity
                 var normal = m_CullingPlanes[i].normal;
                 m_CullingPlaneVectorArray[i] = new Vector4(normal.x, normal.y, normal.z, m_CullingPlanes[i].distance);
             }
+
             CullingCompute.SetVector(ViewPosID, m_ViewPos);
             CullingCompute.SetVectorArray(CullingPlaneVectorArrayID, m_CullingPlaneVectorArray);
+            
+            SelectedMeshletIndex = Math.Clamp(SelectedMeshletIndex, -1, m_MeshletCount-1);
+            CullingCompute.SetInt("_SelectedMeshletIndex", SelectedMeshletIndex);
         }
+
         private void Update()
         {
             if (!IsValid()) return;

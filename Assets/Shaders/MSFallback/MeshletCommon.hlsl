@@ -29,7 +29,8 @@ struct BoundsData
 
 struct InstancePara
 {
-    float4x4 modelToWorld;
-    float4 color;
+    float4x4 ModelToWorld;
+    float4x4 ModelToWorldIT;
+    float4 Color;
 };
 #endif // MESHLET_COMMON_INCLUDED

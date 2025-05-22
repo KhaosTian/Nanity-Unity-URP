@@ -19,11 +19,11 @@ namespace Nanity
     [StructLayout(LayoutKind.Sequential)]
     public class MeshletCollection
     {
-        [HideInInspector]public uint[] triangles;
-        [HideInInspector]public uint[] vertices;
+        [HideInInspector] public uint[] triangles;
+        [HideInInspector] public uint[] vertices;
         public Meshlet[] meshlets;
         public BoundsData[] boundsDataArray;
-        [HideInInspector]public Vector3[] optimizedVertices ;
+        [HideInInspector] public Vector3[] optimizedVertices;
     }
 
     public struct Vertex
@@ -42,17 +42,17 @@ namespace Nanity
     public struct InstancePara
     {
         public Matrix4x4 ModelToWorld;
+        public Matrix4x4 ModelToWorldIT;
         public Color InstanceColor;
-        public const int SIZE = sizeof(float) * 16 + sizeof(float) * 4;
+        public const int SIZE = sizeof(float) * 16 + sizeof(float) * 16 + sizeof(float) * 4;
     }
 
     [Serializable]
     public struct BoundsData
     {
         public Vector4 BoundingSphere;
-        public uint NormalCone;
+        public Vector4 NormalCone;
         public float ApexOffset;
-        public const int SIZE = sizeof(float) * 4 + sizeof(uint) * 1 + sizeof(float) * 1;
+        public const int SIZE = sizeof(float) * 4 + sizeof(float) * 4 + sizeof(float) * 1;
     }
-    
 }

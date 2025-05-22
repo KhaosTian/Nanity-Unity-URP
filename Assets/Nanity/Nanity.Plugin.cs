@@ -4,13 +4,26 @@ using UnityEngine;
 
 namespace Nanity
 {
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BuildSettings
+    {
+        public bool EnableFuse;
+        public bool EnableOpt;
+        public bool EnableRemap;
+        public int MeshletVertexMaxNum;
+        public int MeshletTriangleMaxNum;
+        public float ConeWeight;
+    }
+
     public class NanityPlugin
     {
         // DLL Import statements
         [DllImport("NanityPlugin")]
         private static extern IntPtr BuildMeshlets(
             [In] uint[] indices, uint indicesCount,
-            [In] float[] positions, uint positionsCount);
+            [In] float[] positions, uint positionsCount, bool enableFuse, bool enableOpt, bool enableRemap,
+            float coneWeight);
 
         [DllImport("NanityPlugin")]
         private static extern void DestroyMeshletsContext(IntPtr context);
@@ -46,7 +59,7 @@ namespace Nanity
         private static extern bool
             GetOptimizedVertexPositions(IntPtr context, [Out] float[] positions, uint bufferSize);
 
-        public static MeshletCollection ProcessMesh(uint[] indices, Vector3[] vertices)
+        public static MeshletCollection ProcessMesh(uint[] indices, Vector3[] vertices, BuildSettings buildSettings)
         {
             // Convert Vector3 array to float array
             var positions = new float[vertices.Length * 3];
@@ -58,14 +71,15 @@ namespace Nanity
             }
 
             // 直接调用BuildMeshlets
-            var context = BuildMeshlets(indices, (uint)indices.Length, positions, (uint)positions.Length);
+            var context = BuildMeshlets(indices, (uint)indices.Length, positions, (uint)positions.Length,
+                buildSettings.EnableFuse, buildSettings.EnableOpt, buildSettings.EnableRemap, buildSettings.ConeWeight);
             if (context == IntPtr.Zero)
                 throw new Exception("Failed to build meshlets");
-            
+
             try
             {
                 var collection = new MeshletCollection();
-                
+
                 // Get meshlets
                 var meshletCount = GetMeshletsCount(context);
                 collection.meshlets = new Meshlet[meshletCount];
@@ -89,13 +103,13 @@ namespace Nanity
                 collection.boundsDataArray = new BoundsData[boundsCount];
                 if (!GetBounds(context, collection.boundsDataArray, boundsCount))
                     throw new Exception("Failed to get bounds data");
-                
+
                 // 获取优化后的顶点数据
                 uint optimizedVertexCount = GetOptimizedVertexCount(context);
                 float[] rawPositions = new float[optimizedVertexCount * 3];
                 if (!GetOptimizedVertexPositions(context, rawPositions, optimizedVertexCount * 3))
                     throw new Exception("Failed to get optimized vertex positions");
-                
+
                 collection.optimizedVertices = new Vector3[optimizedVertexCount];
                 for (int i = 0; i < optimizedVertexCount; i++)
                 {
@@ -105,7 +119,7 @@ namespace Nanity
                         rawPositions[i * 3 + 2]
                     );
                 }
-                
+
                 return collection;
             }
             finally
