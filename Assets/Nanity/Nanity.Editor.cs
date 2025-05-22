@@ -34,7 +34,9 @@ namespace Nanity
             m_Settings.EnableFuse = true;
             m_Settings.EnableOpt = true;
             m_Settings.EnableRemap = true;
-            m_Settings.ConeWeight = 0.25f;
+            m_Settings.MaxVertices = 64;
+            m_Settings.MaxTriangles = 64;
+            m_Settings.ConeWeight = 0.5f;
         }
 
         private void OnGUI()
@@ -70,6 +72,8 @@ namespace Nanity
             m_Settings.EnableFuse = EditorGUILayout.Toggle("Enable Fuse", m_Settings.EnableFuse);
             m_Settings.EnableOpt = EditorGUILayout.Toggle("Enable Opt", m_Settings.EnableOpt);
             m_Settings.EnableRemap = EditorGUILayout.Toggle("Enable Remap", m_Settings.EnableRemap);
+            m_Settings.MaxVertices = (uint)EditorGUILayout.IntField("Max Vertices", (int)m_Settings.MaxVertices);
+            m_Settings.MaxTriangles = (uint)EditorGUILayout.IntField("Max Triangles", (int)m_Settings.MaxTriangles);
             m_Settings.ConeWeight = EditorGUILayout.FloatField("Cone Weight", m_Settings.ConeWeight);
             
             // Asset name

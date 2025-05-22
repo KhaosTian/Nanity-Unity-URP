@@ -113,7 +113,7 @@ Shader "Nanity/MeshletRendering"
                     float(i.index + 1 & 7) / 8,
                     1
                 );
-                return facing ? i.color : _BackfaceColor;
+                return facing ? col : _BackfaceColor;
             }
             ENDCG
 

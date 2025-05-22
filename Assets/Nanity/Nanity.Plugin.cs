@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Nanity
 {
@@ -11,8 +12,8 @@ namespace Nanity
         public bool EnableFuse;
         public bool EnableOpt;
         public bool EnableRemap;
-        public int MeshletVertexMaxNum;
-        public int MeshletTriangleMaxNum;
+        public uint MaxVertices;
+        public uint MaxTriangles;
         public float ConeWeight;
     }
 
@@ -23,6 +24,7 @@ namespace Nanity
         private static extern IntPtr BuildMeshlets(
             [In] uint[] indices, uint indicesCount,
             [In] float[] positions, uint positionsCount, bool enableFuse, bool enableOpt, bool enableRemap,
+            uint maxVertices, uint maxTriangles,
             float coneWeight);
 
         [DllImport("NanityPlugin")]
@@ -72,7 +74,7 @@ namespace Nanity
 
             // 直接调用BuildMeshlets
             var context = BuildMeshlets(indices, (uint)indices.Length, positions, (uint)positions.Length,
-                buildSettings.EnableFuse, buildSettings.EnableOpt, buildSettings.EnableRemap, buildSettings.ConeWeight);
+                buildSettings.EnableFuse, buildSettings.EnableOpt, buildSettings.EnableRemap, buildSettings.MaxVertices, buildSettings.MaxTriangles, buildSettings.ConeWeight);
             if (context == IntPtr.Zero)
                 throw new Exception("Failed to build meshlets");
 
