@@ -33,21 +33,21 @@ float4 UnpackCone(uint packed)
 bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3 viewPos)
 {
     // Do a cull test of the bounding sphere against the view frustum planes.
-    const float4 center = mul(float4(boundsData.BoundingSphere.xyz, 1.0), modelToWorld);
+    const float4 center = mul(modelToWorld, float4(boundsData.BoundingSphere.xyz, 1.0));
     const float radius = boundsData.BoundingSphere.w * scale;
 
     [unroll]
     for (uint i = 0; i < 6; ++i)
         if (dot(center, _CullingPlaneVectorArray[i]) < -radius) return false;
 
-    // Do normal cone culling
+    /*// Do normal cone culling
     if (IsConeDegenerate(boundsData)) return true; // Cone is degenerate - spread is wider than a hemisphere.
 
     // Unpack the normal cone from its 8-bit uint compression
     const float4 normalCone = UnpackCone(boundsData.NormalCone);
 
     // Transform axis to world space
-    const float3 axis = normalize(mul(normalCone.xyz, (float3x3)modelToWorld));
+    const float3 axis = normalize(mul((float3x3)modelToWorld, normalCone.xyz));
 
     // Offset the normal cone axis from the meshlet center-point - make sure to account for world scaling
     const float3 apex = center.xyz - axis * boundsData.ApexOffset * scale;
@@ -55,7 +55,7 @@ bool IsVisible(BoundsData boundsData, float4x4 modelToWorld, float scale, float3
 
     // The normal cone w-component stores -cos(angle + 90 deg)
     // This is the min dot product along the inverted axis from which all the meshlet's triangles are backface
-    if (dot(view, -axis) > normalCone.w) return false;
+    if (dot(view, -axis) > normalCone.w) return false;*/
     return true;
 }
 

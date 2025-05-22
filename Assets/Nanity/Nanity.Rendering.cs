@@ -89,7 +89,7 @@ namespace Nanity
 
             m_Collection = SelectedMeshletAsset.Collection;
             m_SourceMesh = SelectedMeshletAsset.SourceMesh;
-            m_ProxyBounds = new Bounds(Vector3.zero, 1000.0f * Vector3.one);
+            m_ProxyBounds = new Bounds(Vector3.zero, 10000.0f * Vector3.one);
             
             m_InstanceCount = Row * Column;
             m_MeshletCountPerInstance = SelectedMeshletAsset.Collection.meshlets.Length;
@@ -180,8 +180,8 @@ namespace Nanity
                     int index = r * Column + c;
 
                     var modelToWorld = Matrix4x4.TRS(
-                        parentPosition + new Vector3(c, r, 0),
-                        Quaternion.identity,
+                        parentPosition + new Vector3(c, r, 0) * 500,
+                        Quaternion.identity, 
                         Vector3.one
                     );
 

@@ -107,13 +107,13 @@ Shader "Nanity/MeshletRendering"
 
             float4 frag(v2f i, bool facing : SV_IsFrontFace) : SV_Target
             {
-                float4 col = float4(
+                /*float4 col = float4(
                     float(i.index & 1),
                     float(i.index & 3) / 4,
                     float(i.index + 1 & 7) / 8,
                     1
-                );
-                return facing ? col : _BackfaceColor;
+                );*/
+                return facing ? i.color : _BackfaceColor;
             }
             ENDCG
 
